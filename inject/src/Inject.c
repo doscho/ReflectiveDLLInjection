@@ -73,6 +73,7 @@ int main( int argc, char * argv[] )
 		hFile = CreateFileA( cpDllFile, GENERIC_READ, 0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL );
 		if( hFile == INVALID_HANDLE_VALUE )
 			BREAK_WITH_ERROR( "Failed to open the DLL file" );
+        printf("success CreateFile %s.\r\n", cpDllFile);
 
 		dwLength = GetFileSize( hFile, NULL );
 		if( dwLength == INVALID_FILE_SIZE || dwLength == 0 )
@@ -104,7 +105,7 @@ int main( int argc, char * argv[] )
 		if( !hModule )
 			BREAK_WITH_ERROR( "Failed to inject the DLL" );
 
-		printf( "[+] Injected the '%s' DLL into process %d.", cpDllFile, dwProcessId );
+		printf( "[+] Injected the '%s' DLL into process %d.\r\n", cpDllFile, dwProcessId );
 		
 		WaitForSingleObject( hModule, -1 );
 

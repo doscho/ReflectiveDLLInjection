@@ -105,6 +105,8 @@ DWORD GetReflectiveLoaderOffset( VOID * lpReflectiveDllBuffer )
 	// get a counter for the number of exported functions...
 	dwCounter = ((PIMAGE_EXPORT_DIRECTORY )uiExportDir)->NumberOfNames;
 
+    printf("dwCounter: %d.\r\n", dwCounter);
+
 	// loop through all the exported functions to find the ReflectiveLoader
 	while( dwCounter-- )
 	{
@@ -205,6 +207,8 @@ HANDLE WINAPI LoadRemoteLibraryR( HANDLE hProcess, LPVOID lpBuffer, DWORD dwLeng
 			dwReflectiveLoaderOffset = GetReflectiveLoaderOffset( lpBuffer );
 			if( !dwReflectiveLoaderOffset )
 				break;
+            printf("[%d]lpBuffer: %c, %c in LoadRemoteLibraryR().\r\n", GetCurrentProcessId(),
+                *(char*)lpBuffer, *((char*)lpBuffer+1));
 
 			// alloc memory (RWX) in the host process for the image...
 			lpRemoteLibraryBuffer = VirtualAllocEx( hProcess, NULL, dwLength, MEM_RESERVE|MEM_COMMIT, PAGE_EXECUTE_READWRITE ); 
