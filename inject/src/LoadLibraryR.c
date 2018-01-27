@@ -28,22 +28,33 @@
 #include "LoadLibraryR.h"
 #include <stdio.h>
 //===============================================================================================//
+// 将RVA地址转化为文件偏移
 DWORD Rva2Offset( DWORD dwRva, UINT_PTR uiBaseAddress )
 {    
+
+    printf("dwRva: 0x%x in Rva2Offset.\r\n", dwRva);
+
 	WORD wIndex                          = 0;
 	PIMAGE_SECTION_HEADER pSectionHeader = NULL;
 	PIMAGE_NT_HEADERS pNtHeaders         = NULL;
 	
+    //得到nt头在内存中的实际地址
 	pNtHeaders = (PIMAGE_NT_HEADERS)(uiBaseAddress + ((PIMAGE_DOS_HEADER)uiBaseAddress)->e_lfanew);
 
+    //获得节表
 	pSectionHeader = (PIMAGE_SECTION_HEADER)((UINT_PTR)(&pNtHeaders->OptionalHeader) + pNtHeaders->FileHeader.SizeOfOptionalHeader);
+    printf("pSectionHeader: 0x%x, pSectionHeader[0].PointerToRawData: 0x%x, in Rva2Offset.\r\n",
+        pSectionHeader, pSectionHeader[0].PointerToRawData);
 
+    // 不在任何块内
     if( dwRva < pSectionHeader[0].PointerToRawData )
         return dwRva;
 
     for( wIndex=0 ; wIndex < pNtHeaders->FileHeader.NumberOfSections ; wIndex++ )
     {   
-        if( dwRva >= pSectionHeader[wIndex].VirtualAddress && dwRva < (pSectionHeader[wIndex].VirtualAddress + pSectionHeader[wIndex].SizeOfRawData) )           
+        printf("pSectionHeader[%d].VirtualAddress: 0x%x.\r\n", 
+            wIndex, pSectionHeader[wIndex].VirtualAddress);
+        if( dwRva >= pSectionHeader[wIndex].VirtualAddress && dwRva < (pSectionHeader[wIndex].VirtualAddress + pSectionHeader[wIndex].SizeOfRawData) )
            return ( dwRva - pSectionHeader[wIndex].VirtualAddress + pSectionHeader[wIndex].PointerToRawData );
     }
     
@@ -89,9 +100,15 @@ DWORD GetReflectiveLoaderOffset( VOID * lpReflectiveDllBuffer )
 
 	// uiNameArray = the address of the modules export directory entry
 	uiNameArray = (UINT_PTR)&((PIMAGE_NT_HEADERS)uiExportDir)->OptionalHeader.DataDirectory[ IMAGE_DIRECTORY_ENTRY_EXPORT ];
-
+    
+    printf("IMAGE_DIRECTORY_ENTRY_EXPORT uiNameArray: 0x%x, uiNameArray->VirtualAddress: 0x%x, uiBaseAddress: 0x%x.\r\n", 
+        uiNameArray, ((PIMAGE_DATA_DIRECTORY)uiNameArray)->VirtualAddress, uiBaseAddress);
+    
 	// get the File Offset of the export directory
 	uiExportDir = uiBaseAddress + Rva2Offset( ((PIMAGE_DATA_DIRECTORY)uiNameArray)->VirtualAddress, uiBaseAddress );
+    
+    printf("IMAGE_DIRECTORY_ENTRY_EXPORT uiExportDir: 0x%x.\r\n",
+        uiExportDir - uiBaseAddress);
 
 	// get the File Offset for the array of name pointers
 	uiNameArray = uiBaseAddress + Rva2Offset( ((PIMAGE_EXPORT_DIRECTORY )uiExportDir)->AddressOfNames, uiBaseAddress );
